@@ -333,9 +333,8 @@ Lộc, Hòa Xuân.
 - Vùng IV, gồm các xã, phường
 còn lại.
 26. Tỉnh Lâm Đồng
-- Vùng II, gồm các phường Xuân
-Hương - Đà Lạt, Cam Ly - Đà Lạt, Lâm Viên - Đà Lạt, Xuân Trường - Đà Lạt, Lang
-Biang - Đà Lạt, 1 Bảo Lộc, 2 Bảo Lộc, 3 Bảo Lộc, B' Lao, Hàm Thắng, Bình Thuận,
+- Vùng II, gồm các phường Xuân Hương, Cam Ly, Lâm Viên, Xuân Trường, Lang
+Biang , 1 Bảo Lộc, 2 Bảo Lộc, 3 Bảo Lộc, B' Lao, Hàm Thắng, Bình Thuận,
 Mũi Né, Phú Thủy, Phan Thiết, Tiến Thành và xã Tuyên Quang.
 - Vùng III, gồm các phường La
 Gi, Phước Hội, Bắc Gia Nghĩa, Nam Gia Nghĩa, Đông Gia Nghĩa và các xã Hiệp Thạnh,
@@ -595,3 +594,4 @@ if search_btn:
         st.warning("⚠️ Vui lòng chọn Tỉnh và nhập tên Phường/Xã để tra cứu.")
 
 st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
+
