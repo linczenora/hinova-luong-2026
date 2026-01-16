@@ -3,7 +3,7 @@ import unicodedata
 import re
 
 # --- CẤU HÌNH GIAO DIỆN (DARK MODE NEON) ---
-st.set_page_config(page_title="Hinova - Tra cứu Lương 2026", page_icon="💰", layout="centered")
+st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng NĐ293", page_icon="💰", layout="centered")
 
 st.markdown("""
     <style>
@@ -579,4 +579,5 @@ if search_btn:
     else:
         st.warning("⚠️ Vui lòng nhập đầy đủ tên Tỉnh và Phường/Xã để tra cứu.")
 
-st.markdown('<div class="footer">Copyright © Hinova 2025. All rights reserved.</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
+
