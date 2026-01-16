@@ -18,7 +18,7 @@ with st.sidebar:
     )
     
     st.divider()
-    st.info("ℹ️ Hệ thống hỗ trợ bởi Hinova.")
+    st.info("ℹ️ Dữ liệu được tham chiếu tại Nghị định 293/2025/NĐ-CP quy định mức lương tối thiểu đối với người lao động làm việc theo hợp đồng lao động  .")
 
 # --- XỬ LÝ CSS THEO GIAO DIỆN ---
 if theme_choice == "🌙 Tối (Neon Mode)":
@@ -684,3 +684,4 @@ if search_btn:
         st.warning("⚠️ Vui lòng chọn Tỉnh và nhập tên Phường/Xã để tra cứu.")
 
 st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
+
