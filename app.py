@@ -7,28 +7,30 @@ st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng NĐ293", page_
 
 # --- THANH CÔNG CỤ BÊN TRÁI (SIDEBAR) ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/190/190411.png", width=80) # Icon tượng trưng
     st.title("⚙️ Cài đặt")
-    st.write("Tùy chỉnh giao diện theo ý muốn:")
+    st.write("Tùy chỉnh giao diện:")
     
     # Nút chọn giao diện
     theme_choice = st.radio(
         "Chế độ hiển thị:",
         ("🌙 Tối (Neon Mode)", "☀️ Sáng (Light Mode)"),
-        index=0 # Mặc định là Tối
+        index=0 
     )
     
     st.divider()
-    st.info("ℹ️ Dữ liệu căn cứ theo Nghị định 293/2025/NĐ-CP.")
+    st.info("ℹ️ Hệ thống hỗ trợ bởi Hinova.")
 
 # --- XỬ LÝ CSS THEO GIAO DIỆN ---
 if theme_choice == "🌙 Tối (Neon Mode)":
-    # CSS DARK MODE (NEON)
+    # CSS DARK MODE (NEON) - Giữ nguyên như Đại vương đã ưng
     css_style = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+    
+    /* Nền tối */
     .stApp { background-color: #0E1117; color: white; }
     
+    /* Tiêu đề Neon */
     .main-title {
         text-align: center;
         background: -webkit-linear-gradient(45deg, #00C6FF, #0072FF);
@@ -42,6 +44,7 @@ if theme_choice == "🌙 Tối (Neon Mode)":
         background-color: #262730 !important; color: white !important; border: 1px solid #4A4A4A !important;
     }
     
+    /* Nút bấm Neon */
     .stButton>button {
         width: 100%; border-radius: 12px; height: 3.5em;
         background: linear-gradient(90deg, #0072FF 0%, #00C6FF 100%);
@@ -50,58 +53,82 @@ if theme_choice == "🌙 Tối (Neon Mode)":
     }
     .stButton>button:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(0, 198, 255, 0.8); }
     
+    /* Kết quả Neon */
     .result-box {
         margin-top: 30px; padding: 30px; border-radius: 16px;
         background: rgba(255, 255, 255, 0.05); border: 1px solid #00C6FF;
         text-align: center; animation: slideUp 0.5s ease-out;
     }
     .result-value { font-size: 3.5em; color: #00E5FF; font-weight: 900; text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin: 0; }
-    .warning-note { color: #FFD700; border-top: 1px dashed rgba(255, 215, 0, 0.5); }
+    .result-location { font-size: 1.1em; color: #eceff1; margin-bottom: 10px; }
+    
+    .warning-note { color: #FFD700; border-top: 1px dashed rgba(255, 215, 0, 0.5); font-style: italic; margin-top: 15px; padding-top: 15px;}
     .footer { color: #546e7a; background: rgba(14, 17, 23, 0.9); border-top: 1px solid #37474f; }
     </style>
     """
 else:
-    # CSS LIGHT MODE (CLEAN)
+    # CSS LIGHT MODE (FIX LỖI CHỮ TRẮNG)
     css_style = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
-    .stApp { background-color: #F8F9FA; color: #212529; }
     
+    /* Nền Sáng */
+    .stApp { background-color: #ffffff; color: #31333F; }
+    
+    /* Tiêu đề Xanh Dương */
     .main-title {
         text-align: center; color: #0d6efd;
         font-size: 3em; font-weight: 900; margin-top: 10px; text-transform: uppercase;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
     .sub-title { text-align: center; color: #6c757d; margin-bottom: 30px; font-weight: 500; }
     
-    /* Input Fields Light */
-    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
-        background-color: #FFFFFF !important; color: #212529 !important; border: 1px solid #CED4DA !important;
+    /* Ép màu chữ đen cho Label (Tên tỉnh, tên phường) */
+    .stTextInput label, .stSelectbox label {
+        color: #31333F !important;
+        font-weight: bold;
     }
     
+    /* Ép màu chữ đen cho ô nhập liệu và dropdown */
+    .stTextInput input {
+        color: #31333F !important;
+        background-color: #f0f2f6 !important;
+        border: 1px solid #ced4da;
+    }
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #f0f2f6 !important;
+        color: #31333F !important;
+        border: 1px solid #ced4da;
+    }
+    /* Chữ bên trong dropdown khi đã chọn */
+    .stSelectbox div[data-baseweb="select"] span {
+        color: #31333F !important;
+    }
+    
+    /* Nút bấm */
     .stButton>button {
         width: 100%; border-radius: 12px; height: 3.5em;
         background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);
         color: white; font-size: 1.2em; font-weight: bold; border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 6px 10px rgba(0,0,0,0.15); }
     
+    /* Hộp kết quả Sáng */
     .result-box {
         margin-top: 30px; padding: 30px; border-radius: 16px;
-        background: #FFFFFF; border: 2px solid #0d6efd;
-        text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        background: #f8f9fa; border: 2px solid #0d6efd;
+        text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         animation: slideUp 0.5s ease-out;
     }
-    .result-location { font-size: 1.1em; color: #495057; margin-bottom: 10px; }
-    .result-value { font-size: 3.5em; color: #198754; font-weight: 900; margin: 0; } /* Màu xanh lá đậm */
+    .result-value { font-size: 3.5em; color: #198754; font-weight: 900; margin: 0; }
+    .result-location { font-size: 1.1em; color: #212529; margin-bottom: 10px; }
     
     .warning-note { 
         margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ffc107;
-        color: #d63384; font-size: 0.9em; font-style: italic; line-height: 1.5; font-weight: bold;
+        color: #d63384; font-size: 0.9em; font-style: italic; font-weight: bold;
     }
     
-    .footer { color: #adb5bd; background: #FFFFFF; border-top: 1px solid #dee2e6; }
+    .footer { color: #adb5bd; background: #ffffff; border-top: 1px solid #dee2e6; }
     </style>
     """
 
@@ -115,7 +142,7 @@ st.markdown(css_style + """
 """, unsafe_allow_html=True)
 
 
-# --- DỮ LIỆU CHUẨN (GIỮ NGUYÊN) ---
+# --- DỮ LIỆU CHUẨN (GIỮ NGUYÊN BẢN GỐC CỦA ĐẠI VƯƠNG) ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -545,15 +572,14 @@ def get_database():
     db = {}
     display_names = {}
     
-    # Thêm \n vào đầu để Regex bắt được dòng đầu tiên (1. Hà Nội)
+    # Regex tách các tỉnh (Thêm \n vào đầu để bắt được dòng 1)
     full_text = '\n' + raw_data.strip()
-    
     entries = re.split(r'\n\d+\.\s+', full_text)
     province_titles = re.findall(r'\n\d+\.\s+(.*)', full_text)
     
     for i in range(len(province_titles)):
         display_name = province_titles[i].strip()
-        content = entries[i+1] # entries[0] rỗng
+        content = entries[i+1] # entry[0] là rỗng
         
         province_key = normalize_text(display_name)
         display_names[province_key] = display_name
@@ -565,12 +591,12 @@ def get_database():
         for zone_id, places in zones:
             zone_key = zone_id.strip()
             
-            # --- XỬ LÝ DẤU CÂU (QUAN TRỌNG) ---
+            # XỬ LÝ DẤU CHẤM PHẨY (;) và CHẤM (.)
             cleaned = places.replace('\n', ' ') \
                             .replace(";", ",") \
                             .replace(".", ",") 
                             
-            # Xóa các từ khóa rác
+            # Lọc từ khóa rác
             cleaned = cleaned.replace("các xã", "") \
                             .replace("các phường", "") \
                             .replace("các đặc khu", "") \
