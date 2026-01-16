@@ -2,97 +2,63 @@ import streamlit as st
 import unicodedata
 import re
 
-# --- CẤU HÌNH TRANG WEB HINOVA ---
-st.set_page_config(page_title="Hinova - Tra cứu Lương 2026", page_icon="💰", layout="centered")
+# --- CẤU HÌNH GIAO DIỆN (DARK MODE NEON) ---
+st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng 2026", page_icon="💰", layout="centered")
 
-# --- CSS LÀM ĐẸP (Đã bỏ cái hộp lỗi, tối ưu cho Dark Mode) ---
 st.markdown("""
     <style>
-    /* Font chữ hiện đại */
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+    html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
     
-    html, body, [class*="css"] {
-        font-family: 'Roboto', sans-serif;
-    }
-
-    /* Tiêu đề chính - Hiệu ứng Gradient chữ */
     .main-title {
         text-align: center;
-        background: -webkit-linear-gradient(45deg, #007CF0, #00DFD8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 3em;
-        font-weight: 900;
-        margin-top: 10px;
-        margin-bottom: 10px;
+        background: -webkit-linear-gradient(45deg, #00C6FF, #0072FF);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        font-size: 3em; font-weight: 900; margin-top: 10px; text-transform: uppercase;
+    }
+    .sub-title { text-align: center; color: #b0bec5; margin-bottom: 30px; }
+    
+    .stButton>button {
+        width: 100%; border-radius: 12px; height: 3.5em;
+        background: linear-gradient(90deg, #0072FF 0%, #00C6FF 100%);
+        color: white; font-size: 1.2em; font-weight: bold; border: none;
+        box-shadow: 0 0 15px rgba(0, 198, 255, 0.5); transition: all 0.3s ease;
+    }
+    .stButton>button:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(0, 198, 255, 0.8); }
+    
+    .result-box {
+        margin-top: 30px; padding: 30px; border-radius: 16px;
+        background: rgba(255, 255, 255, 0.05); border: 1px solid #00C6FF;
+        text-align: center; animation: slideUp 0.5s ease-out;
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .result-location { font-size: 1.1em; color: #eceff1; margin-bottom: 10px; }
+    .result-value {
+        font-size: 3.5em; color: #00E5FF; font-weight: 900;
+        text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin: 0;
     }
     
-    .sub-title {
-        text-align: center;
-        color: #888;
-        font-size: 1.1em;
-        margin-bottom: 40px;
+    /* Style cho dòng Note cảnh báo */
+    .warning-note {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed rgba(0, 198, 255, 0.3);
+        color: #FFD700; /* Màu vàng */
+        font-size: 0.9em;
+        font-style: italic;
+        line-height: 1.5;
     }
 
-    /* Nút bấm TRA CỨU - Hiệu ứng sáng */
-    .stButton>button {
-        width: 100%;
-        border-radius: 12px;
-        height: 3.5em;
-        background: linear-gradient(90deg, #007CF0 0%, #00DFD8 100%);
-        color: white;
-        font-size: 1.2em;
-        font-weight: bold;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0, 124, 240, 0.3);
-        transition: transform 0.2s;
-    }
-    .stButton>button:hover {
-        transform: scale(1.02); /* Phóng to nhẹ khi di chuột */
-        color: white;
-    }
-
-    /* Hộp kết quả */
-    .result-box {
-        margin-top: 30px;
-        padding: 30px;
-        border-radius: 15px;
-        background: rgba(0, 124, 240, 0.1); /* Màu nền trong suốt nhẹ */
-        border: 2px solid #007CF0;
-        text-align: center;
-        animation: fadeIn 0.5s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .result-location {
-        font-size: 1.2em;
-        color: #ffffff; /* Chữ trắng cho nổi trên nền tối */
-        margin-bottom: 10px;
-        opacity: 0.9;
-    }
-    .result-value {
-        font-size: 3.5em;
-        color: #00DFD8; /* Màu xanh ngọc neon */
-        font-weight: 900;
-        text-shadow: 0 0 10px rgba(0, 223, 216, 0.5); /* Hiệu ứng phát sáng */
-        margin: 0;
-    }
-
-    /* Footer */
     .footer {
-        position: fixed; left: 0; bottom: 0; width: 100%;
-        text-align: center; color: #666;
-        padding: 10px; background: rgba(0,0,0,0.5);
-        font-size: 0.8em;
+        position: fixed; left: 0; bottom: 0; width: 100%; text-align: center; color: #546e7a;
+        padding: 10px; background: rgba(14, 17, 23, 0.9); font-size: 0.8em; border-top: 1px solid #37474f;
     }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- DỮ LIỆU & LOGIC (GIỮ NGUYÊN) ---
+# --- DỮ LIỆU ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -510,7 +476,7 @@ Vĩnh Hậu.
 còn lại.
 """
 
-# --- LOGIC XỬ LÝ DỮ LIỆU (CỰC NHANH) ---
+# --- LOGIC XỬ LÝ DỮ LIỆU ---
 def normalize_text(text):
     if not isinstance(text, str): return ""
     text = unicodedata.normalize('NFC', text.lower())
@@ -530,45 +496,60 @@ def get_database():
         zones = re.findall(r'-\s*Vùng\s+([I|V]+)[^,]*,\s*gồm\s*(.*?)(?=\n-\s*Vùng|\n\d+\.|$)', content, re.DOTALL)
         for zone_id, places in zones:
             zone_key = zone_id.strip()
-            cleaned = places.replace('\n', ' ').replace("các xã", "").replace("các phường", "").replace(" và ", ", ")
+            
+            # 1. Làm sạch sơ bộ
+            cleaned = places.replace('\n', ' ') \
+                            .replace("các xã", "") \
+                            .replace("các phường", "") \
+                            .replace("các đặc khu", "") \
+                            .replace("đặc khu", "") \
+                            .replace(" và ", ", ")
+            
             if "còn lại" in cleaned:
                 province_data["default"] = f"Vùng {zone_key}"
             else:
-                p_list = [normalize_text(p) for p in cleaned.split(',')]
-                province_data[zone_key] = [p for p in p_list if p and len(p) > 1]
+                p_list = []
+                for p in cleaned.split(','):
+                    p_norm = normalize_text(p)
+                    # 2. [SỬA LỖI LÂM ĐỒNG] Cắt bỏ phần sau dấu gạch ngang (VD: Xuân Hương - Đà Lạt -> Xuân Hương)
+                    if "-" in p_norm:
+                         p_norm = p_norm.split("-")[0].strip()
+                         
+                    if p_norm and len(p_norm) > 1:
+                        p_list.append(p_norm)
+                        
+                province_data[zone_key] = p_list
         db[province_name] = province_data
     return db
 
 database = get_database()
 
-# --- GIAO DIỆN NGƯỜI DÙNG (CẤU TRÚC MỚI) ---
+# --- GIAO DIỆN NGƯỜI DÙNG ---
 st.markdown("""
     <h1 class="main-title">💰 TRA CỨU HỆ SỐ VÙNG 2026</h1>
     <p class="sub-title">PDA-HINOVA 2026</p>
 """, unsafe_allow_html=True)
 
-# Bỏ div bao quanh form để tránh lỗi trắng màn hình
 col1, col2 = st.columns(2)
 with col1:
-    tinh_input = st.text_input("📍 Tỉnh / Thành phố:", placeholder="Ví dụ: Hà Nội, Đồng Nai...", key="tinh")
+    tinh_input = st.text_input("📍 Tỉnh / Thành phố:", placeholder="Nhập tên tỉnh...", key="tinh")
 with col2:
-    xa_input = st.text_input("🏠 Phường / Xã / Đặc Khu:", placeholder="Ví dụ: Giảng Võ, Trảng Bom, Côn Đảo...", key="xa")
+    xa_input = st.text_input("🏠 Phường / Xã / Đặc Khu:", placeholder="Nhập tên địa phương...", key="xa")
 
 st.markdown('<br>', unsafe_allow_html=True)
 search_btn = st.button("🔍 TRA CỨU NGAY")
 
-# Xử lý khi bấm nút
 if search_btn:
     if tinh_input and xa_input:
         t_norm = normalize_text(tinh_input)
         x_norm = normalize_text(xa_input)
         
-        # Tìm tỉnh gần đúng
         found_key = next((k for k in database if t_norm in k or k in t_norm), None)
         
         if found_key:
             info = database[found_key]
             res_vung = None
+            is_default = False # Cờ báo hiệu kết quả mặc định
             
             # Ưu tiên tìm trong danh sách liệt kê trước
             for z in ["I", "II", "III", "IV"]:
@@ -579,20 +560,28 @@ if search_btn:
             # Nếu không liệt kê thì dùng mặc định
             if not res_vung:
                 res_vung = info['default']
+                is_default = True
             
-            # Hiển thị kết quả đẹp mắt
+            # Tạo nội dung cảnh báo (nếu có)
+            note_content = ""
+            if is_default:
+                note_content = """
+                <div class="warning-note">
+                    ⚠️ Địa phương thuộc trường hợp loại trừ căn cứ nghị định 293/2025/NĐ-CP, 
+                    vui lòng nhập chính xác tên địa phương cần tra cứu.
+                </div>
+                """
+            
             st.markdown(f"""
                 <div class="result-box">
                     <p class="result-location">Địa bàn: <b>{xa_input.title()}</b> - <b>{found_key.title()}</b></p>
                     <p class="result-value">{res_vung}</p>
+                    {note_content}
                 </div>
             """, unsafe_allow_html=True)
         else:
-            # Báo lỗi không tìm thấy tỉnh
             st.warning(f"❌ Không tìm thấy dữ liệu cho tỉnh: '{tinh_input}'. Vui lòng kiểm tra lại chính tả.")
     else:
-        # Báo lỗi thiếu thông tin
         st.warning("⚠️ Vui lòng nhập đầy đủ tên Tỉnh và Phường/Xã để tra cứu.")
 
-# Footer bản quyền
-st.markdown('<div class="footer">Copyright © Hinova 2025. All rights reserved.</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
