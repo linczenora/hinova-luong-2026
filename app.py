@@ -3,7 +3,7 @@ import unicodedata
 import re
 
 # --- CẤU HÌNH GIAO DIỆN (DARK MODE NEON) ---
-st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng 2026", page_icon="💰", layout="centered")
+st.set_page_config(page_title="Hinova - Tra cứu Lương 2026", page_icon="💰", layout="centered")
 
 st.markdown("""
     <style>
@@ -39,15 +39,9 @@ st.markdown("""
         text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin: 0;
     }
     
-    /* Style cho dòng Note cảnh báo */
     .warning-note {
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px dashed rgba(0, 198, 255, 0.3);
-        color: #FFD700; /* Màu vàng */
-        font-size: 0.9em;
-        font-style: italic;
-        line-height: 1.5;
+        margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0, 198, 255, 0.3);
+        color: #FFD700; font-size: 0.9em; font-style: italic; line-height: 1.5;
     }
 
     .footer {
@@ -58,7 +52,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DỮ LIỆU ---
+# --- DỮ LIỆU ĐÃ ĐƯỢC TÁCH TỈNH (CLEAN DATA) ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -381,19 +375,20 @@ Trung, Thạnh Mỹ Tây, Bình Quới, Hạnh Thông, An Nhơn, Gò Vấp, An H
 Tây Hội, An Hội Tây, Đức Nhuận, Cầu Kiệu, Phú Nhuận, Tân Sơn Hoà, Tân Sơn Nhất,
 Tân Hoà, Bảy Hiền, Tân Bình, Tân Sơn, Tân Thạnh, Tân Sơn Nhì, Phú Thọ Hoà, Tân
 Phú, Phú Thạnh, Hiệp Bình, Thủ Đức, Tam Bình, Linh Xuân, Tăng Nhơn Phú, Long
-Bình, Long Phước, Long Trường, Cát Lái, Bình Trưng, Phước Long, An Khánh, Đông
-Hoà, Dĩ An, Tân Đông Hiệp, An Phú, Bình Hoà, Lái Thiêu, Thuận An, Thuận Giao,
+Bình, Long Phước, Long Trường, Cát Lái, Bình Trưng, Phước Long, An Khánh,
+Nhà Bè, Cần Giờ.
+- Vùng II, gồm các phường xã còn lại.
+28a. Tỉnh Bình Dương
+- Vùng I, gồm các phường Đông Hoà, Dĩ An, Tân Đông Hiệp, An Phú, Bình Hoà, Lái Thiêu, Thuận An, Thuận Giao,
 Thủ Dầu Một, Phú Lợi, Chánh Hiệp, Bình Dương, Hoà Lợi, Thới Hoà, Phú An, Tây
 Nam, Long Nguyên, Bến Cát, Chánh Phú Hoà, Vĩnh Tân, Bình Cơ, Tân Uyên, Tân Hiệp,
-Tân Khánh, Vũng Tàu, Tam Thắng, Rạch Dừa, Phước Thắng, Tân Hải, Tân Phước, Phú
-Mỹ, Tân Thành và các xã Vĩnh Lộc, Tân Vĩnh Lộc, Bình Lợi, Tân Nhựt Bình Chánh,
-Hưng Long, Bình Hưng, Củ Chi, Tân An Hội, Thái Mỹ, An Nhơn Tây, Nhuận Đức, Phú
-Hoà Đông, Bình Mỹ, Đông Thạnh, Hóc Môn, Xuân Thới Sơn, Bà Điểm, Nhà Bè, Hiệp
-Phước, Thường Tân, Bắc Tân Uyên, Phú Giáo, Phước Hoà, Phước Thành, An Long, Trừ
-Văn Thố, Bàu Bàng, Long Hoà, Thanh An, Dầu Tiếng, Minh Thạnh, Long Sơn, Châu
-Pha.
+Tân Khánh và các xã Thường Tân, Bắc Tân Uyên, Phú Giáo, Phước Hoà, Phước Thành, An Long, Trừ
+Văn Thố, Bàu Bàng, Long Hoà, Thanh An, Dầu Tiếng, Minh Thạnh.
+28b. Tỉnh Bà Rịa - Vũng Tàu
+- Vùng I, gồm các phường Vũng Tàu, Tam Thắng, Rạch Dừa, Phước Thắng, Tân Hải, Tân Phước, Phú
+Mỹ, Tân Thành và các xã Long Sơn, Châu Pha.
 - Vùng II, gồm các phường Bà Rịa,
-Long Hương, Tam Long và các xã Bình Khánh, An Thới Đông, Cần Giờ, Thạnh An; các
+Long Hương, Tam Long và các xã Bình Khánh, An Thới Đông, Thạnh An; các
 xã Kim Long, Châu Đức, Ngãi Giao, Nghĩa Thành, Long Hải, Long Điền và đặc khu
 Côn Đảo.
 - Vùng III, gồm các xã, phường
@@ -486,14 +481,14 @@ def normalize_text(text):
 @st.cache_data(show_spinner=False)
 def get_database():
     db = {}
-    entries = re.split(r'\n\d+\.\s+', raw_data.strip())
+    entries = re.split(r'\n\d+[a-z]?\.\s+', raw_data.strip()) # Cập nhật Regex để bắt được 28a, 28b
     for entry in entries:
         if not entry.strip(): continue
         lines = entry.split('\n', 1)
         province_name = normalize_text(lines[0])
         content = lines[1] if len(lines) > 1 else ""
         province_data = {"default": "Vùng IV"} 
-        zones = re.findall(r'-\s*Vùng\s+([I|V]+)[^,]*,\s*gồm\s*(.*?)(?=\n-\s*Vùng|\n\d+\.|$)', content, re.DOTALL)
+        zones = re.findall(r'-\s*Vùng\s+([I|V]+)[^,]*,\s*gồm\s*(.*?)(?=\n-\s*Vùng|\n\d+[a-z]?\.|$)', content, re.DOTALL)
         for zone_id, places in zones:
             zone_key = zone_id.strip()
             
@@ -584,4 +579,4 @@ if search_btn:
     else:
         st.warning("⚠️ Vui lòng nhập đầy đủ tên Tỉnh và Phường/Xã để tra cứu.")
 
-st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">Copyright © Hinova 2025. All rights reserved.</div>', unsafe_allow_html=True)
