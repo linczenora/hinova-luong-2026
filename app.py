@@ -2,13 +2,32 @@ import streamlit as st
 import unicodedata
 import re
 
-# --- CẤU HÌNH GIAO DIỆN ---
-st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng 2026", page_icon="💰", layout="centered")
+# --- CẤU HÌNH TRANG ---
+st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng NĐ293", page_icon="💰", layout="centered")
 
-st.markdown("""
+# --- THANH CÔNG CỤ BÊN TRÁI (SIDEBAR) ---
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/190/190411.png", width=80) # Icon tượng trưng
+    st.title("⚙️ Cài đặt")
+    st.write("Tùy chỉnh giao diện theo ý muốn:")
+    
+    # Nút chọn giao diện
+    theme_choice = st.radio(
+        "Chế độ hiển thị:",
+        ("🌙 Tối (Neon Mode)", "☀️ Sáng (Light Mode)"),
+        index=0 # Mặc định là Tối
+    )
+    
+    st.divider()
+    st.info("ℹ️ Dữ liệu căn cứ theo Nghị định 293/2025/NĐ-CP.")
+
+# --- XỬ LÝ CSS THEO GIAO DIỆN ---
+if theme_choice == "🌙 Tối (Neon Mode)":
+    # CSS DARK MODE (NEON)
+    css_style = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
+    .stApp { background-color: #0E1117; color: white; }
     
     .main-title {
         text-align: center;
@@ -17,6 +36,11 @@ st.markdown("""
         font-size: 3em; font-weight: 900; margin-top: 10px; text-transform: uppercase;
     }
     .sub-title { text-align: center; color: #b0bec5; margin-bottom: 30px; }
+    
+    /* Input Fields Dark */
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #262730 !important; color: white !important; border: 1px solid #4A4A4A !important;
+    }
     
     .stButton>button {
         width: 100%; border-radius: 12px; height: 3.5em;
@@ -31,28 +55,67 @@ st.markdown("""
         background: rgba(255, 255, 255, 0.05); border: 1px solid #00C6FF;
         text-align: center; animation: slideUp 0.5s ease-out;
     }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .result-location { font-size: 1.1em; color: #eceff1; margin-bottom: 10px; }
-    .result-value {
-        font-size: 3.5em; color: #00E5FF; font-weight: 900;
-        text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin: 0;
-    }
-    
-    .warning-note {
-        margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255, 215, 0, 0.5);
-        color: #FFD700; font-size: 0.9em; font-style: italic; line-height: 1.5;
-    }
-
-    .footer {
-        position: fixed; left: 0; bottom: 0; width: 100%; text-align: center; color: #546e7a;
-        padding: 10px; background: rgba(14, 17, 23, 0.9); font-size: 0.8em; border-top: 1px solid #37474f;
-    }
-    #MainMenu {visibility: hidden;} footer {visibility: hidden;}
+    .result-value { font-size: 3.5em; color: #00E5FF; font-weight: 900; text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin: 0; }
+    .warning-note { color: #FFD700; border-top: 1px dashed rgba(255, 215, 0, 0.5); }
+    .footer { color: #546e7a; background: rgba(14, 17, 23, 0.9); border-top: 1px solid #37474f; }
     </style>
-    """, unsafe_allow_html=True)
+    """
+else:
+    # CSS LIGHT MODE (CLEAN)
+    css_style = """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+    .stApp { background-color: #F8F9FA; color: #212529; }
+    
+    .main-title {
+        text-align: center; color: #0d6efd;
+        font-size: 3em; font-weight: 900; margin-top: 10px; text-transform: uppercase;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    .sub-title { text-align: center; color: #6c757d; margin-bottom: 30px; font-weight: 500; }
+    
+    /* Input Fields Light */
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #FFFFFF !important; color: #212529 !important; border: 1px solid #CED4DA !important;
+    }
+    
+    .stButton>button {
+        width: 100%; border-radius: 12px; height: 3.5em;
+        background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);
+        color: white; font-size: 1.2em; font-weight: bold; border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;
+    }
+    .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 6px 10px rgba(0,0,0,0.15); }
+    
+    .result-box {
+        margin-top: 30px; padding: 30px; border-radius: 16px;
+        background: #FFFFFF; border: 2px solid #0d6efd;
+        text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        animation: slideUp 0.5s ease-out;
+    }
+    .result-location { font-size: 1.1em; color: #495057; margin-bottom: 10px; }
+    .result-value { font-size: 3.5em; color: #198754; font-weight: 900; margin: 0; } /* Màu xanh lá đậm */
+    
+    .warning-note { 
+        margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ffc107;
+        color: #d63384; font-size: 0.9em; font-style: italic; line-height: 1.5; font-weight: bold;
+    }
+    
+    .footer { color: #adb5bd; background: #FFFFFF; border-top: 1px solid #dee2e6; }
+    </style>
+    """
 
-# --- DỮ LIỆU CHUẨN ---
+# Inject CSS
+st.markdown(css_style + """
+    <style>
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;}
+    .footer { position: fixed; left: 0; bottom: 0; width: 100%; text-align: center; padding: 10px; font-size: 0.8em; }
+    </style>
+""", unsafe_allow_html=True)
+
+
+# --- DỮ LIỆU CHUẨN (GIỮ NGUYÊN) ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -333,8 +396,9 @@ Lộc, Hòa Xuân.
 - Vùng IV, gồm các xã, phường
 còn lại.
 26. Tỉnh Lâm Đồng
-- Vùng II, gồm các phường Xuân Hương, Cam Ly, Lâm Viên, Xuân Trường, Lang
-Biang , 1 Bảo Lộc, 2 Bảo Lộc, 3 Bảo Lộc, B' Lao, Hàm Thắng, Bình Thuận,
+- Vùng II, gồm các phường Xuân
+Hương - Đà Lạt, Cam Ly - Đà Lạt, Lâm Viên - Đà Lạt, Xuân Trường - Đà Lạt, Lang
+Biang - Đà Lạt, 1 Bảo Lộc, 2 Bảo Lộc, 3 Bảo Lộc, B' Lao, Hàm Thắng, Bình Thuận,
 Mũi Né, Phú Thủy, Phan Thiết, Tiến Thành và xã Tuyên Quang.
 - Vùng III, gồm các phường La
 Gi, Phước Hội, Bắc Gia Nghĩa, Nam Gia Nghĩa, Đông Gia Nghĩa và các xã Hiệp Thạnh,
@@ -469,7 +533,7 @@ Vĩnh Hậu.
 còn lại.
 """
 
-# --- LOGIC XỬ LÝ DỮ LIỆU [CẬP NHẬT MỚI: XỬ LÝ DẤU CHẤM PHẨY] ---
+# --- LOGIC XỬ LÝ DỮ LIỆU ---
 def normalize_text(text):
     if not isinstance(text, str): return ""
     text = unicodedata.normalize('NFC', text.lower())
@@ -501,12 +565,12 @@ def get_database():
         for zone_id, places in zones:
             zone_key = zone_id.strip()
             
-            # --- [LOGIC QUAN TRỌNG]: Thay thế ; và . bằng , trước khi split ---
+            # --- XỬ LÝ DẤU CÂU (QUAN TRỌNG) ---
             cleaned = places.replace('\n', ' ') \
                             .replace(";", ",") \
                             .replace(".", ",") 
                             
-            # Xóa các từ khóa rác sau khi đã xử lý dấu câu
+            # Xóa các từ khóa rác
             cleaned = cleaned.replace("các xã", "") \
                             .replace("các phường", "") \
                             .replace("các đặc khu", "") \
@@ -594,4 +658,3 @@ if search_btn:
         st.warning("⚠️ Vui lòng chọn Tỉnh và nhập tên Phường/Xã để tra cứu.")
 
 st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
-
