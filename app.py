@@ -3,7 +3,7 @@ import unicodedata
 import re
 
 # --- CẤU HÌNH GIAO DIỆN (DARK MODE NEON) ---
-st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng NĐ293", page_icon="💰", layout="centered")
+st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng 2026", page_icon="💰", layout="centered")
 
 st.markdown("""
     <style>
@@ -39,6 +39,7 @@ st.markdown("""
         text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin: 0;
     }
     
+    /* Note vàng chỉ hiện khi rơi vào default */
     .warning-note {
         margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255, 215, 0, 0.5);
         color: #FFD700; font-size: 0.9em; font-style: italic; line-height: 1.5;
@@ -52,7 +53,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DỮ LIỆU ĐÃ ĐƯỢC TÁCH TỈNH (CLEAN DATA) ---
+# --- DỮ LIỆU CHUẨN (CẬP NHẬT MỚI NHẤT TỪ ĐẠI VƯƠNG) ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -375,20 +376,19 @@ Trung, Thạnh Mỹ Tây, Bình Quới, Hạnh Thông, An Nhơn, Gò Vấp, An H
 Tây Hội, An Hội Tây, Đức Nhuận, Cầu Kiệu, Phú Nhuận, Tân Sơn Hoà, Tân Sơn Nhất,
 Tân Hoà, Bảy Hiền, Tân Bình, Tân Sơn, Tân Thạnh, Tân Sơn Nhì, Phú Thọ Hoà, Tân
 Phú, Phú Thạnh, Hiệp Bình, Thủ Đức, Tam Bình, Linh Xuân, Tăng Nhơn Phú, Long
-Bình, Long Phước, Long Trường, Cát Lái, Bình Trưng, Phước Long, An Khánh,
-Nhà Bè, Cần Giờ.
-- Vùng II, gồm các phường xã còn lại.
-28a. Tỉnh Bình Dương
-- Vùng I, gồm các phường Đông Hoà, Dĩ An, Tân Đông Hiệp, An Phú, Bình Hoà, Lái Thiêu, Thuận An, Thuận Giao,
+Bình, Long Phước, Long Trường, Cát Lái, Bình Trưng, Phước Long, An Khánh, Đông
+Hoà, Dĩ An, Tân Đông Hiệp, An Phú, Bình Hoà, Lái Thiêu, Thuận An, Thuận Giao,
 Thủ Dầu Một, Phú Lợi, Chánh Hiệp, Bình Dương, Hoà Lợi, Thới Hoà, Phú An, Tây
 Nam, Long Nguyên, Bến Cát, Chánh Phú Hoà, Vĩnh Tân, Bình Cơ, Tân Uyên, Tân Hiệp,
-Tân Khánh và các xã Thường Tân, Bắc Tân Uyên, Phú Giáo, Phước Hoà, Phước Thành, An Long, Trừ
-Văn Thố, Bàu Bàng, Long Hoà, Thanh An, Dầu Tiếng, Minh Thạnh.
-28b. Tỉnh Bà Rịa - Vũng Tàu
-- Vùng I, gồm các phường Vũng Tàu, Tam Thắng, Rạch Dừa, Phước Thắng, Tân Hải, Tân Phước, Phú
-Mỹ, Tân Thành và các xã Long Sơn, Châu Pha.
+Tân Khánh, Vũng Tàu, Tam Thắng, Rạch Dừa, Phước Thắng, Tân Hải, Tân Phước, Phú
+Mỹ, Tân Thành và các xã Vĩnh Lộc, Tân Vĩnh Lộc, Bình Lợi, Tân Nhựt Bình Chánh,
+Hưng Long, Bình Hưng, Củ Chi, Tân An Hội, Thái Mỹ, An Nhơn Tây, Nhuận Đức, Phú
+Hoà Đông, Bình Mỹ, Đông Thạnh, Hóc Môn, Xuân Thới Sơn, Bà Điểm, Nhà Bè, Hiệp
+Phước, Thường Tân, Bắc Tân Uyên, Phú Giáo, Phước Hoà, Phước Thành, An Long, Trừ
+Văn Thố, Bàu Bàng, Long Hoà, Thanh An, Dầu Tiếng, Minh Thạnh, Long Sơn, Châu
+Pha.
 - Vùng II, gồm các phường Bà Rịa,
-Long Hương, Tam Long và các xã Bình Khánh, An Thới Đông, Thạnh An; các
+Long Hương, Tam Long và các xã Bình Khánh, An Thới Đông, Cần Giờ, Thạnh An; các
 xã Kim Long, Châu Đức, Ngãi Giao, Nghĩa Thành, Long Hải, Long Điền và đặc khu
 Côn Đảo.
 - Vùng III, gồm các xã, phường
@@ -481,29 +481,23 @@ def normalize_text(text):
 @st.cache_data(show_spinner=False)
 def get_database():
     db = {}
-    display_names = {} # Lưu tên hiển thị (Có dấu, Viết hoa)
+    display_names = {}
     
-    # Regex tìm các dòng bắt đầu bằng số thứ tự (VD: 1. Hà Nội, 28a. Bình Dương)
-    entries = re.split(r'\n\d+[a-z]?\.\s+', raw_data.strip())
+    entries = re.split(r'\n\d+\.\s+', raw_data.strip())
+    # Lấy danh sách tên tỉnh hiển thị cho Dropdown
+    province_titles = re.findall(r'\n\d+\.\s+(.*)', '\n' + raw_data.strip())
     
-    # Lấy danh sách tên tỉnh đầy đủ từ raw_data để làm Dropdown
-    province_titles = re.findall(r'\n\d+[a-z]?\.\s+(.*)', '\n' + raw_data.strip())
-    
-    # Xử lý từng tỉnh
     for i, entry in enumerate(entries):
         if not entry.strip(): continue
         
-        # Tên tỉnh hiển thị (Lấy từ list province_titles nếu khớp index, hoặc fallback)
         display_name = province_titles[i-1] if i-1 < len(province_titles) else entry.split('\n')[0]
         province_key = normalize_text(display_name)
-        
-        # Lưu mapping: key chuẩn hóa -> tên hiển thị đẹp
         display_names[province_key] = display_name.strip()
 
-        content = entry # Nội dung vùng
+        content = entry 
         province_data = {"default": "Vùng IV"} 
         
-        zones = re.findall(r'-\s*Vùng\s+([I|V]+)[^,]*,\s*gồm\s*(.*?)(?=\n-\s*Vùng|\n\d+[a-z]?\.|$)', content, re.DOTALL)
+        zones = re.findall(r'-\s*Vùng\s+([I|V]+)[^,]*,\s*gồm\s*(.*?)(?=\n-\s*Vùng|\n\d+\.|$)', content, re.DOTALL)
         
         for zone_id, places in zones:
             zone_key = zone_id.strip()
@@ -541,8 +535,6 @@ st.markdown("""
 
 col1, col2 = st.columns(2)
 with col1:
-    # --- THAY ĐỔI: DROPDOWN LIST CHO TỈNH ---
-    # Lấy danh sách tên hiển thị từ map
     province_options = list(display_names_map.values())
     selected_province = st.selectbox("📍 Chọn Tỉnh / Thành phố:", province_options, index=None, placeholder="Chọn hoặc gõ để tìm...")
     
@@ -554,11 +546,9 @@ search_btn = st.button("🔍 TRA CỨU NGAY")
 
 if search_btn:
     if selected_province and xa_input:
-        # Lấy key chuẩn hóa từ tên tỉnh đã chọn
         t_norm = normalize_text(selected_province)
         x_norm = normalize_text(xa_input)
         
-        # Tìm dữ liệu tỉnh (Chắc chắn thấy vì chọn từ list)
         info = database.get(t_norm)
         
         if info:
@@ -571,7 +561,7 @@ if search_btn:
                     res_vung = f"VÙNG {z}"
                     break
             
-            # Nếu không tìm thấy tên -> Vùng mặc định
+            # Nếu không tìm thấy tên -> Vùng mặc định -> BẬT CỜ CẢNH BÁO
             if not res_vung:
                 res_vung = info['default']
                 is_default = True
