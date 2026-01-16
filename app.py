@@ -52,7 +52,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DỮ LIỆU GỐC (GIỮ NGUYÊN BẢN - KHÔNG TÁCH, KHÔNG SỬA) ---
+# --- DỮ LIỆU CHUẨN ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -470,7 +470,7 @@ Vĩnh Hậu.
 còn lại.
 """
 
-# --- LOGIC XỬ LÝ DỮ LIỆU ---
+# --- LOGIC XỬ LÝ DỮ LIỆU [CẬP NHẬT MỚI: XỬ LÝ DẤU CHẤM PHẨY] ---
 def normalize_text(text):
     if not isinstance(text, str): return ""
     text = unicodedata.normalize('NFC', text.lower())
@@ -482,20 +482,15 @@ def get_database():
     db = {}
     display_names = {}
     
-    # [FIX QUAN TRỌNG] Thêm \n vào đầu raw_data để Regex bắt được "1. Thành phố Hà Nội"
-    # Vì re.split tìm "\nSố." nên nếu dòng đầu không có \n sẽ bị bỏ qua
+    # Thêm \n vào đầu để Regex bắt được dòng đầu tiên (1. Hà Nội)
     full_text = '\n' + raw_data.strip()
     
     entries = re.split(r'\n\d+\.\s+', full_text)
     province_titles = re.findall(r'\n\d+\.\s+(.*)', full_text)
     
-    # entries[0] luôn là rỗng do split ở đầu, bỏ qua
-    # province_titles[0] (Hà Nội) sẽ ứng với entries[1]
-    
     for i in range(len(province_titles)):
-        # Mapping: Title[i] đi với Entry[i+1]
         display_name = province_titles[i].strip()
-        content = entries[i+1]
+        content = entries[i+1] # entries[0] rỗng
         
         province_key = normalize_text(display_name)
         display_names[province_key] = display_name
@@ -507,8 +502,13 @@ def get_database():
         for zone_id, places in zones:
             zone_key = zone_id.strip()
             
+            # --- [LOGIC QUAN TRỌNG]: Thay thế ; và . bằng , trước khi split ---
             cleaned = places.replace('\n', ' ') \
-                            .replace("các xã", "") \
+                            .replace(";", ",") \
+                            .replace(".", ",") 
+                            
+            # Xóa các từ khóa rác sau khi đã xử lý dấu câu
+            cleaned = cleaned.replace("các xã", "") \
                             .replace("các phường", "") \
                             .replace("các đặc khu", "") \
                             .replace("đặc khu", "") \
@@ -520,8 +520,9 @@ def get_database():
                 p_list = []
                 for p in cleaned.split(','):
                     p_norm = normalize_text(p)
-                    # Xử lý đặc biệt cho Lâm Đồng (Xuân Hương - Đà Lạt)
+                    # Fix lỗi Lâm Đồng (Xuân Hương - Đà Lạt)
                     if "-" in p_norm: p_norm = p_norm.split("-")[0].strip()
+                    
                     if p_norm and len(p_norm) > 1:
                         p_list.append(p_norm)
                 province_data[zone_key] = p_list
@@ -566,12 +567,12 @@ if search_btn:
                     res_vung = f"VÙNG {z}"
                     break
             
-            # Nếu không tìm thấy tên -> Vùng mặc định
+            # Nếu không tìm thấy tên -> Vùng mặc định -> BẬT CỜ CẢNH BÁO
             if not res_vung:
                 res_vung = info['default']
                 is_default = True
             
-            # Note vàng chỉ hiện khi rơi vào default
+            # Chỉ hiện cảnh báo khi rơi vào trường hợp mặc định
             note_content = ""
             if is_default:
                 note_content = """
