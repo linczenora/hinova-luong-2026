@@ -2,21 +2,127 @@ import streamlit as st
 import unicodedata
 import re
 
-# --- CẤU HÌNH GIAO DIỆN WEB HINOVA ---
+# --- CẤU HÌNH TRANG WEB HINOVA ---
 st.set_page_config(page_title="Hinova - Tra cứu Lương 2026", page_icon="💰", layout="centered")
 
-# Tùy chỉnh CSS để giao diện chuyên nghiệp hơn
+# --- "PHÁP THUẬT" CSS LÀM ĐẸP GIAO DIỆN ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stButton>button { width: 100%; border-radius: 8px; height: 3em; background-color: #007bff; color: white; font-weight: bold; border: none; }
-    .stButton>button:hover { background-color: #0056b3; color: white; }
-    .footer { position: fixed; left: 0; bottom: 0; width: 100%; text-align: center; color: #6c757d; padding: 10px; background: white; border-top: 1px solid #dee2e6; font-size: 0.9em; }
-    .result-box { padding: 20px; border-radius: 10px; border: 1px solid #007bff; background-color: #e7f3ff; text-align: center; }
+    /* Nhúng font chữ hiện đại Roboto */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f4f7f9; /* Màu nền xám xanh nhẹ nhàng */
+    }
+
+    /* Tiêu đề chính */
+    .main-title {
+        text-align: center;
+        color: #0d47a1; /* Xanh dương đậm sang trọng */
+        font-size: 3em;
+        font-weight: 900;
+        margin-top: 20px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    .sub-title {
+        text-align: center;
+        color: #546e7a;
+        font-size: 1.1em;
+        margin-bottom: 35px;
+    }
+    .highlight { color: #0d47a1; font-weight: bold; }
+
+    /* Thẻ chứa form nhập liệu (Card effect) */
+    .input-card {
+        background-color: #ffffff;
+        padding: 35px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08); /* Đổ bóng mềm mại */
+        margin-bottom: 30px;
+    }
+    
+    /* Label cho ô nhập liệu */
+    .input-label {
+        font-size: 1.1em;
+        font-weight: 700;
+        color: #37474f;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    /* Nút bấm "TRA CỨU NGAY" */
+    .stButton>button {
+        width: 100%;
+        border-radius: 12px;
+        height: 3.5em;
+        /* Gradient chuyển màu xanh hiện đại */
+        background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%);
+        color: white;
+        font-size: 1.2em;
+        font-weight: 800;
+        border: none;
+        box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3);
+        transition: all 0.3s ease; /* Hiệu ứng mượt mà */
+    }
+    .stButton>button:hover {
+        transform: translateY(-3px); /* Nổi lên khi di chuột */
+        box-shadow: 0 8px 20px rgba(13, 71, 161, 0.4);
+    }
+
+    /* Hộp kết quả */
+    .result-box {
+        padding: 35px;
+        border-radius: 20px;
+        background: linear-gradient(to right, #e8f5e9, #c8e6c9); /* Gradient xanh lá nhẹ */
+        border-left: 8px solid #2e7d32; /* Thanh nhấn màu xanh đậm */
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(46, 125, 50, 0.15);
+        animation: fadeUp 0.6s ease-out; /* Hiệu ứng bay lên */
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .result-location {
+        font-size: 1.3em;
+        color: #1b5e20;
+        margin-bottom: 15px;
+    }
+    .result-value {
+        font-size: 4em; /* Chữ kết quả siêu to */
+        color: #2e7d32; /* Màu xanh lá đậm nổi bật */
+        font-weight: 900;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Thông báo lỗi */
+    .error-box {
+        padding: 20px;
+        border-radius: 12px;
+        background-color: #ffebee;
+        border-left: 6px solid #c62828;
+        color: #c62828;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    /* Footer */
+    .footer {
+        position: fixed; left: 0; bottom: 0; width: 100%;
+        text-align: center; color: #90a4ae;
+        padding: 15px; background: #ffffff;
+        border-top: 1px solid #eceff1; font-size: 0.9em;
+    }
+    /* Ẩn một số element mặc định của Streamlit để gọn hơn */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- DỮ LIỆU GỐC TỪ NGHỊ ĐỊNH (FULL 34 TỈNH) ---
+# --- DỮ LIỆU & LOGIC (GIỮ NGUYÊN KHÔNG ĐỔI) ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -434,14 +540,14 @@ Vĩnh Hậu.
 còn lại.
 """
 
-# --- LOGIC XỬ LÝ DỮ LIỆU ---
+# --- LOGIC XỬ LÝ DỮ LIỆU (CỰC NHANH) ---
 def normalize_text(text):
     if not isinstance(text, str): return ""
     text = unicodedata.normalize('NFC', text.lower())
     text = re.sub(r'\s+', ' ', text)
     return text.strip()
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_database():
     db = {}
     entries = re.split(r'\n\d+\.\s+', raw_data.strip())
@@ -465,20 +571,27 @@ def get_database():
 
 database = get_database()
 
-# --- GIAO DIỆN WEB ---
-st.markdown("<h1 style='text-align: center; color: #007bff;'>💰 TRA CỨU VÙNG LƯƠNG 2026</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic;'>Hệ thống hỗ trợ bởi Hinova</p>", unsafe_allow_html=True)
+# --- GIAO DIỆN NGƯỜI DÙNG ---
+st.markdown("""
+    <h1 class="main-title">💰 TRA CỨU HỆ SỐ VÙNG 2026</h1>
+    <p class="sub-title">PDA-HINOVA <span class="highlight">2026</span></p>
+""", unsafe_allow_html=True)
 
-# Form nhập liệu
-with st.container():
-    col1, col2 = st.columns(2)
-    with col1:
-        tinh_input = st.text_input("📍 Tỉnh / Thành phố:", placeholder="Nhập tên tỉnh...")
-    with col2:
-        xa_input = st.text_input("🏠 Phường / Xã / Đặc Khu:", placeholder="Nhập tên địa phương...")
+# Thẻ chứa form nhập liệu
+st.markdown('<div class="input-card">', unsafe_allow_html=True)
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown('<label class="input-label">📍 Tỉnh / Thành phố:</label>', unsafe_allow_html=True)
+    tinh_input = st.text_input("", placeholder="Ví dụ: Hà Nội, Đồng Nai...", key="tinh")
+with col2:
+    st.markdown('<label class="input-label">🏠 Phường / Xã / Đặc Khu:</label>', unsafe_allow_html=True)
+    xa_input = st.text_input("", placeholder="Ví dụ: Giảng Võ, Trảng Bom, Côn Đảo...", key="xa")
 
-    search_btn = st.button("TRA CỨU NGAY")
+st.markdown('<br>', unsafe_allow_html=True) # Khoảng cách
+search_btn = st.button("🔍 TRA CỨU NGAY")
+st.markdown('</div>', unsafe_allow_html=True) # Kết thúc thẻ input-card
 
+# Xử lý khi bấm nút
 if search_btn:
     if tinh_input and xa_input:
         t_norm = normalize_text(tinh_input)
@@ -504,15 +617,24 @@ if search_btn:
             # Hiển thị kết quả đẹp mắt
             st.markdown(f"""
                 <div class="result-box">
-                    <h3>KẾT QUẢ TRA CỨU</h3>
-                    <p style='font-size: 1.2em;'>Địa bàn: <b>{xa_input.title()}</b> - <b>{found_key.title()}</b></p>
-                    <p style='font-size: 2em; color: #28a745; font-weight: bold;'>{res_vung}</p>
+                    <p class="result-location">Địa bàn: <b>{xa_input.title()}</b> - <b>{found_key.title()}</b></p>
+                    <p class="result-value">{res_vung}</p>
                 </div>
             """, unsafe_allow_html=True)
         else:
-            st.error(f"❌ Không tìm thấy dữ liệu cho tỉnh: {tinh_input}")
+            # Báo lỗi không tìm thấy tỉnh
+            st.markdown(f"""
+                <div class="error-box">
+                    ❌ Không tìm thấy dữ liệu cho tỉnh: "{tinh_input}".<br>Vui lòng kiểm tra lại chính tả.
+                </div>
+            """, unsafe_allow_html=True)
     else:
-        st.warning("⚠️ Vui lòng nhập đầy đủ tên Tỉnh và Xã/Phường để tra cứu.")
+        # Báo lỗi thiếu thông tin
+        st.markdown("""
+            <div class="error-box">
+                ⚠️ Vui lòng nhập đầy đủ tên Tỉnh và Phường/Xã để tra cứu.
+            </div>
+        """, unsafe_allow_html=True)
 
 # Footer bản quyền
-st.markdown('<div class="footer">Copyright © Hinova 2026</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">Copyright © Hinova 2025. All rights reserved.</div>', unsafe_allow_html=True)
