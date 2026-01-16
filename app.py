@@ -2,7 +2,7 @@ import streamlit as st
 import unicodedata
 import re
 
-# --- CẤU HÌNH GIAO DIỆN (DARK MODE NEON) ---
+# --- CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(page_title="Hinova - Tra cứu hệ số vùng 2026", page_icon="💰", layout="centered")
 
 st.markdown("""
@@ -39,7 +39,6 @@ st.markdown("""
         text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin: 0;
     }
     
-    /* Note vàng chỉ hiện khi rơi vào default */
     .warning-note {
         margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255, 215, 0, 0.5);
         color: #FFD700; font-size: 0.9em; font-style: italic; line-height: 1.5;
@@ -53,7 +52,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DỮ LIỆU CHUẨN (CẬP NHẬT MỚI NHẤT TỪ ĐẠI VƯƠNG) ---
+# --- DỮ LIỆU GỐC (GIỮ NGUYÊN BẢN - KHÔNG TÁCH, KHÔNG SỬA) ---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -483,18 +482,24 @@ def get_database():
     db = {}
     display_names = {}
     
-    entries = re.split(r'\n\d+\.\s+', raw_data.strip())
-    # Lấy danh sách tên tỉnh hiển thị cho Dropdown
-    province_titles = re.findall(r'\n\d+\.\s+(.*)', '\n' + raw_data.strip())
+    # [FIX QUAN TRỌNG] Thêm \n vào đầu raw_data để Regex bắt được "1. Thành phố Hà Nội"
+    # Vì re.split tìm "\nSố." nên nếu dòng đầu không có \n sẽ bị bỏ qua
+    full_text = '\n' + raw_data.strip()
     
-    for i, entry in enumerate(entries):
-        if not entry.strip(): continue
+    entries = re.split(r'\n\d+\.\s+', full_text)
+    province_titles = re.findall(r'\n\d+\.\s+(.*)', full_text)
+    
+    # entries[0] luôn là rỗng do split ở đầu, bỏ qua
+    # province_titles[0] (Hà Nội) sẽ ứng với entries[1]
+    
+    for i in range(len(province_titles)):
+        # Mapping: Title[i] đi với Entry[i+1]
+        display_name = province_titles[i].strip()
+        content = entries[i+1]
         
-        display_name = province_titles[i-1] if i-1 < len(province_titles) else entry.split('\n')[0]
         province_key = normalize_text(display_name)
-        display_names[province_key] = display_name.strip()
+        display_names[province_key] = display_name
 
-        content = entry 
         province_data = {"default": "Vùng IV"} 
         
         zones = re.findall(r'-\s*Vùng\s+([I|V]+)[^,]*,\s*gồm\s*(.*?)(?=\n-\s*Vùng|\n\d+\.|$)', content, re.DOTALL)
@@ -502,7 +507,6 @@ def get_database():
         for zone_id, places in zones:
             zone_key = zone_id.strip()
             
-            # Làm sạch dữ liệu
             cleaned = places.replace('\n', ' ') \
                             .replace("các xã", "") \
                             .replace("các phường", "") \
@@ -516,7 +520,8 @@ def get_database():
                 p_list = []
                 for p in cleaned.split(','):
                     p_norm = normalize_text(p)
-                    if "-" in p_norm: p_norm = p_norm.split("-")[0].strip() # Fix lỗi Lâm Đồng
+                    # Xử lý đặc biệt cho Lâm Đồng (Xuân Hương - Đà Lạt)
+                    if "-" in p_norm: p_norm = p_norm.split("-")[0].strip()
                     if p_norm and len(p_norm) > 1:
                         p_list.append(p_norm)
                 province_data[zone_key] = p_list
@@ -561,12 +566,12 @@ if search_btn:
                     res_vung = f"VÙNG {z}"
                     break
             
-            # Nếu không tìm thấy tên -> Vùng mặc định -> BẬT CỜ CẢNH BÁO
+            # Nếu không tìm thấy tên -> Vùng mặc định
             if not res_vung:
                 res_vung = info['default']
                 is_default = True
             
-            # Chỉ hiện cảnh báo khi rơi vào trường hợp mặc định
+            # Note vàng chỉ hiện khi rơi vào default
             note_content = ""
             if is_default:
                 note_content = """
@@ -584,7 +589,7 @@ if search_btn:
                 </div>
             """, unsafe_allow_html=True)
         else:
-             st.error("Lỗi dữ liệu hệ thống. Vui lòng liên hệ Admin.")
+             st.error("Lỗi dữ liệu hệ thống.")
     else:
         st.warning("⚠️ Vui lòng chọn Tỉnh và nhập tên Phường/Xã để tra cứu.")
 
