@@ -40,7 +40,7 @@ st.markdown("""
     }
     
     .warning-note {
-        margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0, 198, 255, 0.3);
+        margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255, 215, 0, 0.5);
         color: #FFD700; font-size: 0.9em; font-style: italic; line-height: 1.5;
     }
 
@@ -481,18 +481,34 @@ def normalize_text(text):
 @st.cache_data(show_spinner=False)
 def get_database():
     db = {}
-    entries = re.split(r'\n\d+[a-z]?\.\s+', raw_data.strip()) # Cập nhật Regex để bắt được 28a, 28b
-    for entry in entries:
+    display_names = {} # Lưu tên hiển thị (Có dấu, Viết hoa)
+    
+    # Regex tìm các dòng bắt đầu bằng số thứ tự (VD: 1. Hà Nội, 28a. Bình Dương)
+    entries = re.split(r'\n\d+[a-z]?\.\s+', raw_data.strip())
+    
+    # Lấy danh sách tên tỉnh đầy đủ từ raw_data để làm Dropdown
+    province_titles = re.findall(r'\n\d+[a-z]?\.\s+(.*)', '\n' + raw_data.strip())
+    
+    # Xử lý từng tỉnh
+    for i, entry in enumerate(entries):
         if not entry.strip(): continue
-        lines = entry.split('\n', 1)
-        province_name = normalize_text(lines[0])
-        content = lines[1] if len(lines) > 1 else ""
+        
+        # Tên tỉnh hiển thị (Lấy từ list province_titles nếu khớp index, hoặc fallback)
+        display_name = province_titles[i-1] if i-1 < len(province_titles) else entry.split('\n')[0]
+        province_key = normalize_text(display_name)
+        
+        # Lưu mapping: key chuẩn hóa -> tên hiển thị đẹp
+        display_names[province_key] = display_name.strip()
+
+        content = entry # Nội dung vùng
         province_data = {"default": "Vùng IV"} 
+        
         zones = re.findall(r'-\s*Vùng\s+([I|V]+)[^,]*,\s*gồm\s*(.*?)(?=\n-\s*Vùng|\n\d+[a-z]?\.|$)', content, re.DOTALL)
+        
         for zone_id, places in zones:
             zone_key = zone_id.strip()
             
-            # 1. Làm sạch sơ bộ
+            # Làm sạch dữ liệu
             cleaned = places.replace('\n', ' ') \
                             .replace("các xã", "") \
                             .replace("các phường", "") \
@@ -506,18 +522,16 @@ def get_database():
                 p_list = []
                 for p in cleaned.split(','):
                     p_norm = normalize_text(p)
-                    # 2. [SỬA LỖI LÂM ĐỒNG] Cắt bỏ phần sau dấu gạch ngang (VD: Xuân Hương - Đà Lạt -> Xuân Hương)
-                    if "-" in p_norm:
-                         p_norm = p_norm.split("-")[0].strip()
-                         
+                    if "-" in p_norm: p_norm = p_norm.split("-")[0].strip() # Fix lỗi Lâm Đồng
                     if p_norm and len(p_norm) > 1:
                         p_list.append(p_norm)
-                        
                 province_data[zone_key] = p_list
-        db[province_name] = province_data
-    return db
+        
+        db[province_key] = province_data
+        
+    return db, display_names
 
-database = get_database()
+database, display_names_map = get_database()
 
 # --- GIAO DIỆN NGƯỜI DÙNG ---
 st.markdown("""
@@ -527,7 +541,11 @@ st.markdown("""
 
 col1, col2 = st.columns(2)
 with col1:
-    tinh_input = st.text_input("📍 Tỉnh / Thành phố:", placeholder="Nhập tên tỉnh...", key="tinh")
+    # --- THAY ĐỔI: DROPDOWN LIST CHO TỈNH ---
+    # Lấy danh sách tên hiển thị từ map
+    province_options = list(display_names_map.values())
+    selected_province = st.selectbox("📍 Chọn Tỉnh / Thành phố:", province_options, index=None, placeholder="Chọn hoặc gõ để tìm...")
+    
 with col2:
     xa_input = st.text_input("🏠 Phường / Xã / Đặc Khu:", placeholder="Nhập tên địa phương...", key="xa")
 
@@ -535,49 +553,49 @@ st.markdown('<br>', unsafe_allow_html=True)
 search_btn = st.button("🔍 TRA CỨU NGAY")
 
 if search_btn:
-    if tinh_input and xa_input:
-        t_norm = normalize_text(tinh_input)
+    if selected_province and xa_input:
+        # Lấy key chuẩn hóa từ tên tỉnh đã chọn
+        t_norm = normalize_text(selected_province)
         x_norm = normalize_text(xa_input)
         
-        found_key = next((k for k in database if t_norm in k or k in t_norm), None)
+        # Tìm dữ liệu tỉnh (Chắc chắn thấy vì chọn từ list)
+        info = database.get(t_norm)
         
-        if found_key:
-            info = database[found_key]
+        if info:
             res_vung = None
-            is_default = False # Cờ báo hiệu kết quả mặc định
+            is_default = False 
             
-            # Ưu tiên tìm trong danh sách liệt kê trước
+            # Ưu tiên tìm trong danh sách liệt kê
             for z in ["I", "II", "III", "IV"]:
                 if z in info and any(p in x_norm for p in info[z]):
                     res_vung = f"VÙNG {z}"
                     break
             
-            # Nếu không liệt kê thì dùng mặc định
+            # Nếu không tìm thấy tên -> Vùng mặc định
             if not res_vung:
                 res_vung = info['default']
                 is_default = True
             
-            # Tạo nội dung cảnh báo (nếu có)
+            # Chỉ hiện cảnh báo khi rơi vào trường hợp mặc định
             note_content = ""
             if is_default:
                 note_content = """
                 <div class="warning-note">
-                    ⚠️ Địa phương thuộc trường hợp loại trừ căn cứ nghị định 293/2025/NĐ-CP, 
-                    vui lòng nhập chính xác tên địa phương cần tra cứu.
+                    ⚠️ Địa phương thuộc trường hợp loại trừ (vùng còn lại) căn cứ Nghị định 293/2025/NĐ-CP.
+                    <br>Vui lòng kiểm tra lại chính tả nếu kết quả chưa chính xác.
                 </div>
                 """
             
             st.markdown(f"""
                 <div class="result-box">
-                    <p class="result-location">Địa bàn: <b>{xa_input.title()}</b> - <b>{found_key.title()}</b></p>
+                    <p class="result-location">Địa bàn: <b>{xa_input.title()}</b> - <b>{selected_province}</b></p>
                     <p class="result-value">{res_vung}</p>
                     {note_content}
                 </div>
             """, unsafe_allow_html=True)
         else:
-            st.warning(f"❌ Không tìm thấy dữ liệu cho tỉnh: '{tinh_input}'. Vui lòng kiểm tra lại chính tả.")
+             st.error("Lỗi dữ liệu hệ thống. Vui lòng liên hệ Admin.")
     else:
-        st.warning("⚠️ Vui lòng nhập đầy đủ tên Tỉnh và Phường/Xã để tra cứu.")
+        st.warning("⚠️ Vui lòng chọn Tỉnh và nhập tên Phường/Xã để tra cứu.")
 
 st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
-
