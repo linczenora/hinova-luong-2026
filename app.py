@@ -22,7 +22,7 @@ with st.sidebar:
 
 # --- XỬ LÝ CSS THEO GIAO DIỆN ---
 if theme_choice == "🌙 Tối (Neon Mode)":
-    # CSS DARK MODE (NEON) - Giữ nguyên như Đại vương đã ưng
+    # CSS DARK MODE (NEON)
     css_style = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
@@ -142,7 +142,7 @@ st.markdown(css_style + """
 """, unsafe_allow_html=True)
 
 
-# --- DỮ LIỆU CHUẨN (GIỮ NGUYÊN BẢN GỐC CỦA ĐẠI VƯƠNG) ---
+# --- DỮ LIỆU CHUẨN---
 raw_data = """
 1. Thành phố Hà Nội
 - Vùng I, gồm các phường Hoàn
@@ -684,4 +684,5 @@ if search_btn:
         st.warning("⚠️ Vui lòng chọn Tỉnh và nhập tên Phường/Xã để tra cứu.")
 
 st.markdown('<div class="footer">Copyright © Hinova 2026. All rights reserved.</div>', unsafe_allow_html=True)
+
 
