@@ -20,7 +20,7 @@ with st.sidebar:
     st.divider()
     st.info("ℹ️ Dữ liệu được tham chiếu tại Nghị định 293/2025/NĐ-CP quy định mức lương tối thiểu đối với người lao động làm việc theo hợp đồng lao động  .")
 
-# --- XỬ LÝ CSS THEO GIAO DIỆN ---
+# --- XỬ LÝ CSS  THEO GIAO DIỆN ---
 if theme_choice == "🌙 Tối (Neon Mode)":
     # CSS DARK MODE (NEON)
     css_style = """
